@@ -10,3 +10,5 @@ target/
 .metals
 .bloop
 
+/.bsp/
+/src/main/scala/com/imdb/services/data/

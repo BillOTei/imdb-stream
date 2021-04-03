@@ -1,8 +1,16 @@
 package com.imdb.services
 
-object MovieService {
+import com.imdb.models.TitleBasic
 
-  def principalsForMovieName(name: String) = ???
+import scala.concurrent.Future
+
+object MovieService {
+  val cpuThreads: Int = Runtime.getRuntime.availableProcessors() // Let's stick to logical threads for now
+
+  def principalsForMovieName(name: String) = {
+    DataService.streamFile("title.basics.tsv")
+      .mapAsync(cpuThreads)(v => Future.fromTry(TitleBasic.fromMap(v)))
+  }
 
   def tvSeriesWithGreatestNumberOfEpisodes() = ???
 
