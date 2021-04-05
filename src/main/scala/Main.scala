@@ -1,22 +1,17 @@
 import akka.Done
 import akka.actor.ActorSystem
-import com.imdb.models.{NameBasic, TitleBasic, TitlePrincipal}
-import com.imdb.services.DataService
+import com.imdb.models.TitlePrincipal
+import com.imdb.services.{DataService, MovieService}
 
 import scala.concurrent._
-import scala.util.{Failure, Success}
 
 object Main extends App {
   implicit val system: ActorSystem = ActorSystem("Imdb")
 
-  val source                                = DataService.streamFile("name.basics.tsv")
-  val done: Future[Done]                    = source.runForeach(i => {
-    println(NameBasic.fromMap(i) match {
-      case Success(value) => println(value)
-      case Failure(exception) => {
-        println(exception.getMessage)
-      }
-    })
+  val source = MovieService.principalsForMovieName("Le clown et ses chiens")
+
+  val done: Future[Done] = source.runForeach(i => {
+    println(i)
   })
   implicit val ec: ExecutionContextExecutor = system.dispatcher
   done.onComplete(_ => system.terminate())

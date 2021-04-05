@@ -18,10 +18,14 @@ case class TitleBasic(
 
 object TitleBasic {
 
+  val primaryTitleFieldName = "primaryTitle"
+  val originalTitleFieldName = "originalTitle"
+  val titleIdFieldName = "tconst"
+
   def fromMap(m: Map[String, String]): Try[TitleBasic] =
     Try(
       TitleBasic(
-        tconst = m("tconst"),
+        tconst = m(titleIdFieldName),
         titleType = DataService.convert[String](m.get("titleType")),
         primaryTitle = DataService.convert[String](m.get("primaryTitle")),
         originalTitle = DataService.convert[String](m.get("originalTitle")),

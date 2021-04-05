@@ -13,12 +13,22 @@ case class TitlePrincipal(
     characters: Option[String]
 )
 
-object TitlePrincipal {
+object TitlePrincipal extends Parsable[TitlePrincipal] {
+  val titleIdFieldName = "tconst"
+
+  def apply(a: List[String]): TitlePrincipal = TitlePrincipal(
+    tconst = a.head,
+    ordering = DataService.convert[Int](a.lift(1)),
+    nconst = a(2),
+    category = DataService.convert[String](a.lift(3)),
+    job = DataService.convert[String](a.lift(4)),
+    characters = DataService.convert[String](a.lift(5))
+  )
 
   def fromMap(m: Map[String, String]): Try[TitlePrincipal] =
     Try(
       TitlePrincipal(
-        tconst = m("tconst"),
+        tconst = m(titleIdFieldName),
         ordering = DataService.convert[Int](m.get("ordering")),
         nconst = m("nconst"),
         category = DataService.convert[String](m.get("category")),
