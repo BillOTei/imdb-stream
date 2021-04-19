@@ -1,8 +1,9 @@
 package com.imdb.services
 
-import akka.stream.IOResult
+import akka.stream.alpakka.csv.MalformedCsvException
+import akka.stream.{ActorAttributes, IOResult, Supervision}
 import akka.stream.alpakka.csv.scaladsl.{CsvParsing, CsvToMap}
-import akka.stream.scaladsl.{FileIO, Source => AkkaSource}
+import akka.stream.scaladsl.{Compression, FileIO, Source => AkkaSource}
 import shapeless._
 import shapeless.syntax.typeable._
 
@@ -23,13 +24,27 @@ object DataService {
 
   def streamFile(fileName: String): AkkaSource[Map[String, String], Future[IOResult]] = {
     val file = Paths.get(folder + "/" + fileName)
+    val decider: Supervision.Decider = {
+      case _: MalformedCsvException => Supervision.Resume
+      case _                      => Supervision.Stop
+    }
     FileIO
       .fromPath(file)
-      //.via(Compression.inflate())
+      .via(Compression.gunzip())
       .via(CsvParsing.lineScanner('\t'))
+      .log("error logging")
+      .withAttributes(ActorAttributes.supervisionStrategy(decider))
       .via(CsvToMap.toMapAsStrings())
   }
 
+  /**
+   * @deprecated
+   * optimization tests
+   * @param fileName
+   * @param apply
+   * @tparam T
+   * @return
+   */
   def fileToInMemoryMap[T](fileName: String, apply: List[String] => T): Try[mutable.HashMap[String, T]] = {
     val map = collection.mutable.HashMap[String, T]()
     Using(Source.fromFile(folder + "/" + fileName)) { content =>
@@ -46,6 +61,13 @@ object DataService {
     }
   }
 
+  /**
+   * @deprecated
+   * optimization tests
+   * @param fileName
+   * @tparam T
+   * @return
+   */
   def fileToInMemoryStringMap[T](fileName: String): Try[mutable.HashMap[String, Array[String]]] = {
     val map = collection.mutable.HashMap[String, Array[String]]()
     Using(Source.fromFile(folder + "/" + fileName)) { content =>
